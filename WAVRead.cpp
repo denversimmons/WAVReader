@@ -119,6 +119,8 @@ float* readWAV(const char fileName[])
 			{
 				fread(&bit24, bytesPerSample, 1, fp);
 				fSamp = ((float)bit24) / (float)(8388607);
+				if (fSamp > 1) fSamp = 1;
+				if (fSamp < -1) fSamp = -1;
 			}
 			else if (bitsPerSample == 32)
 			{
