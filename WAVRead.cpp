@@ -2,21 +2,22 @@
 #include <fstream>
 #include <iostream>
 #include <stdint.h>
+#include "int24.h"
 #pragma warning(disable:4996)
 
 float* readWAV(const char fileName[])
 {
 	FILE *fp = nullptr;
 	char type[4];
-	uint32_t fileSize;		//Size of file in bytes - 8
+	uint32_t fileSize;			//Size of file in bytes - 8
 	uint32_t chunk1Size;		//Size of format chunk in bytes
 	uint32_t WAVsampleRate;		//Samplerate of file
 	uint32_t avgBytesPerSec;	//Number of bytes per second (sampleRate * blockAlign)
 	uint32_t chunk2Size;		//Size of data chunk in bytes
-	short formatType;		//Format type. This program will only support 1 and 3
-	short channels;			//Number of channels
-	short blockAlign;		//Number of bytes in a frame (bytes per sample in ALL CHANNELS)			
-	short bitsPerSample;		//Bit depth. This program will only support 8, 16, and 32 bit depth
+	short formatType;			//Format type. This program will only support 1 and 3
+	short channels;				//Number of channels
+	short blockAlign;			//Number of bytes in a frame (bytes per sample in ALL CHANNELS)			
+	short bitsPerSample;		//Bit depth. This program will only support 8, 16, 24, and 32 bit depth
 
 	std::cout << "Begin Reading " << fileName << std::endl;
 
@@ -80,6 +81,8 @@ float* readWAV(const char fileName[])
 	std::cout << "Byte Rate: " << avgBytesPerSec << std::endl;
 	std::cout << "Block Align: " << blockAlign << std::endl;
 	std::cout << "Bits Per Sample: " << bitsPerSample << std::endl;
+
+
 	std::cout << "Chunk 2 Size: " << chunk2Size << std::endl;
 	std::cout << "Samples Count: " << samples_count << std::endl;
 
@@ -87,9 +90,10 @@ float* readWAV(const char fileName[])
 
 	float* table = new float[samples_count * channels + 1]; // store samples as floats. First space reserved for number of channels
 	float fSamp;
-	uint8_t iSamp8;
-	int16_t iSamp16;
-	int32_t iSamp32;
+	uint8_t bit8;
+	int16_t bit16;
+	Int24 bit24;
+	float bit32;
 
 	table[0] = channels;
 
@@ -99,24 +103,32 @@ float* readWAV(const char fileName[])
 		{
 			if (bitsPerSample == 8)
 			{
-				fread(&iSamp8, bytesPerSample, 1, fp);
-				fSamp = ((float)iSamp8 - 127.5f) / (float)127.5;
+				fread(&bit8, bytesPerSample, 1, fp);
+				fSamp = ((float)bit8 - 127.5f) / (float)127.5;
 				if (fSamp > 1) fSamp = 1;					
 				if (fSamp < -1) fSamp = -1;
 			}
-			if (bitsPerSample == 16)
+			else if (bitsPerSample == 16)
 			{
-				fread(&iSamp16, bytesPerSample, 1, fp);
-				fSamp = ((float)iSamp16) / (float)32768;					
+				fread(&bit16, bytesPerSample, 1, fp);
+				fSamp = ((float)bit16) / (float)32768;
 				if (fSamp > 1) fSamp = 1;
 				if (fSamp < -1) fSamp = -1;
 			}
-			if (bitsPerSample == 32)
+			else if (bitsPerSample == 24)
 			{
-				fread(&iSamp32, bytesPerSample, 1, fp);
-				fSamp = ((float)iSamp32) / (float)2147483648;
-				if (fSamp > 1) fSamp = 1;
-				if (fSamp < -1) fSamp = -1;
+				fread(&bit24, bytesPerSample, 1, fp);
+				fSamp = ((float)bit24) / (float)(8388607);
+			}
+			else if (bitsPerSample == 32)
+			{
+				fread(&bit32, bytesPerSample, 1, fp);
+				fSamp = bit32;
+			}
+			else
+			{
+				std::cout << "Unsupported bit depth: " << bitsPerSample << std::endl;
+				return nullptr;
 			}
 			table[index+1] = fSamp;
 		}
@@ -151,6 +163,6 @@ float* readWAV(const char fileName[])
 
 int main()
 {
-	float* table = readWAV("Bolly Snare.wav");
+	float* table = readWAV("JPGC_vocal_cats.wav");
 	return 0;
 }
