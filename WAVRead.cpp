@@ -6,15 +6,7 @@
 
 float* readWAV(const char fileName[])
 {
-	std::cout << "Begin Reading " << fileName << std::endl;
-	FILE *fp = NULL;
-	fp = fopen(fileName, "r");
-	if (!fp)
-	{
-		std::cout << "Error Reading WAV: Nullpointer" << std::endl;
-		return nullptr;
-	}
-
+	FILE *fp = nullptr;
 	char type[4];
 	uint32_t fileSize;		//Size of file in bytes - 8
 	uint32_t chunk1Size;		//Size of format chunk in bytes
@@ -26,39 +18,53 @@ float* readWAV(const char fileName[])
 	short blockAlign;		//Number of bytes in a frame (bytes per sample in ALL CHANNELS)			
 	short bitsPerSample;		//Bit depth. This program will only support 8, 16, and 32 bit depth
 
+	std::cout << "Begin Reading " << fileName << std::endl;
+
+	fp = fopen(fileName, "r");
+	if (!fp)
+	{
+		return nullptr;
+	}
+
+	//Parse through format chunk
+
 	fread(type, sizeof(char), 4, fp);
 	if (!strcmp(type, "RIFF"))
 	{
-		std::cout << "Error Reading WAV: RIFF" << std::endl;
 		return nullptr;
 	}
 
 	fread(&fileSize, sizeof(uint32_t), 1, fp);
+
 	fread(type, sizeof(char), 4, fp);
 	if (!strcmp(type, "WAVE"))
 	{
-		std::cout << "Error Reading WAV: WAVE" << std::endl;
 		return nullptr;
 	}
 		
 	fread(type, sizeof(char), 4, fp);
 	if (!strcmp(type, "fmt"))
 	{
-		std::cout << "Error Reading WAV: fmt" << std::endl;
 		return nullptr;
 	}
 
 	fread(&chunk1Size, sizeof(uint32_t), 1, fp);
+
 	fread(&formatType, sizeof(short), 1, fp);
+
 	fread(&channels, sizeof(short), 1, fp);
+
 	fread(&WAVsampleRate, sizeof(uint32_t), 1, fp);
+
 	fread(&avgBytesPerSec, sizeof(uint32_t), 1, fp);
+
 	fread(&blockAlign, sizeof(short), 1, fp);
+
 	fread(&bitsPerSample, sizeof(short), 1, fp);
+
 	fread(type, sizeof(char), 4, fp);
 	if (!strcmp(type, "data"))
 	{
-		std::cout << "Error Reading WAV" << std::endl;
 		return nullptr;
 	}
 
@@ -77,15 +83,17 @@ float* readWAV(const char fileName[])
 	std::cout << "Chunk 2 Size: " << chunk2Size << std::endl;
 	std::cout << "Samples Count: " << samples_count << std::endl;
 
-	// Begin Parsing
+	// Parse through data chunk
 
-	float* table = new float[samples_count];
+	float* table = new float[samples_count + 1]; // store samples as floats. First space reserved for number of channels
 	float fSamp;
 	uint8_t iSamp8;
 	int16_t iSamp16;
 	int32_t iSamp32;
 
-	if (formatType == 1)
+	table[0] = channels;
+
+	if (formatType == 1) // PCM
 	{
 		for (int index = 0; index < (channels * samples_count); index++)
 		{
@@ -110,11 +118,11 @@ float* readWAV(const char fileName[])
 				if (fSamp > 1) fSamp = 1;
 				if (fSamp < -1) fSamp = -1;
 			}
-			table[index] = fSamp;
+			table[index+1] = fSamp;
 		}
 	}
 
-	if (formatType == 3)
+	if (formatType == 3) // Incomplete!!!!!!!
 	{
 		if (channels == 1)
 		{
