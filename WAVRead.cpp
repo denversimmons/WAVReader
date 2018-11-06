@@ -19,7 +19,7 @@ float* readWAV(const char fileName[])
 	uint32_t fileSize;		//Size of file in bytes - 8
 	uint32_t chunk1Size;		//Size of format chunk in bytes
 	uint32_t WAVsampleRate;		//Samplerate of file
-	uint32_t avgBytesPerSec;	//Number of frames per second (samples per second in ALL CHANNELS)
+	uint32_t avgBytesPerSec;	//Number of bytes per second (sampleRate * blockAlign)
 	uint32_t chunk2Size;		//Size of data chunk in bytes
 	short formatType;		//Format type. This program will only support 1 and 3
 	short channels;			//Number of channels
