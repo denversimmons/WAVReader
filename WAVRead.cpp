@@ -85,7 +85,7 @@ float* readWAV(const char fileName[])
 
 	// Parse through data chunk
 
-	float* table = new float[samples_count * 2 + 1]; // store samples as floats. First space reserved for number of channels
+	float* table = new float[samples_count * channels + 1]; // store samples as floats. First space reserved for number of channels
 	float fSamp;
 	uint8_t iSamp8;
 	int16_t iSamp16;
